@@ -47,20 +47,20 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const currentTenant = getCurrentTenant();
   const currentTenantKey = getCurrentTenantKey();
   const adminToken = getAdminToken();
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-    ...(init?.headers ?? {}),
-  };
+  const headers = new Headers(init?.headers);
+  if (!headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
+  }
 
   // Agregar headers de autenticación de tenant si existen
   if (currentTenant && currentTenantKey) {
-    headers['X-Tenant'] = currentTenant;
-    headers['X-Tenant-Key'] = currentTenantKey;
+    headers.set("X-Tenant", currentTenant);
+    headers.set("X-Tenant-Key", currentTenantKey);
   }
 
   // Agregar token JWT de admin si existe (tiene prioridad sobre tenant)
   if (adminToken) {
-    headers['Authorization'] = `Bearer ${adminToken}`;
+    headers.set("Authorization", `Bearer ${adminToken}`);
   }
   
   const response = await fetch(url, {

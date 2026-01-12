@@ -140,7 +140,20 @@ export default function EditPrintPage() {
         </Link>
       </div>
 
-      {error && <Alert type="error" message={error} />}
+      {error.message && (
+        <Alert variant="error" className="mb-6">
+          <div>
+            <p className="font-medium">{error.message}</p>
+            {error.details && (
+              <ul className="mt-2 list-disc list-inside text-sm">
+                {error.details.map((detail, index) => (
+                  <li key={index}>{detail}</li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </Alert>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -213,7 +226,7 @@ export default function EditPrintPage() {
                     step="0.1"
                     min="0"
                     max="100"
-                    value={formData.porcentaje_desperdicio}
+                    value={formData.porcentaje_desperdicio ?? 0}
                     onChange={(e) => handleInputChange('porcentaje_desperdicio', parseFloat(e.target.value) || 0)}
                     placeholder="0.0"
                   />
@@ -228,7 +241,7 @@ export default function EditPrintPage() {
                     step="0.1"
                     min="0"
                     max="100"
-                    value={formData.margen_beneficio * 100}
+                    value={(formData.margen_beneficio ?? 0) * 100}
                     onChange={(e) => handleInputChange('margen_beneficio', (parseFloat(e.target.value) || 0) / 100)}
                     placeholder="0.0"
                   />
@@ -246,17 +259,14 @@ export default function EditPrintPage() {
                   Máquina *
                 </label>
                 <Select
-                  value={formData.machine_id}
+                  value={formData.machine_id ?? 0}
                   onChange={(e) => handleInputChange('machine_id', parseInt(e.target.value))}
                   required
-                >
-                  <option value={0}>Seleccionar máquina</option>
-                  {machines.map(machine => (
-                    <option key={machine.id} value={machine.id}>
-                      {machine.nombre}
-                    </option>
-                  ))}
-                </Select>
+                  options={[
+                    { value: 0, label: "Seleccionar máquina" },
+                    ...machines.map((machine) => ({ value: machine.id, label: machine.nombre })),
+                  ]}
+                />
               </div>
               
               <div>
@@ -264,17 +274,14 @@ export default function EditPrintPage() {
                   Trabajador *
                 </label>
                 <Select
-                  value={formData.worker_id}
+                  value={formData.worker_id ?? 0}
                   onChange={(e) => handleInputChange('worker_id', parseInt(e.target.value))}
                   required
-                >
-                  <option value={0}>Seleccionar trabajador</option>
-                  {workers.map(worker => (
-                    <option key={worker.id} value={worker.id}>
-                      {worker.nombre}
-                    </option>
-                  ))}
-                </Select>
+                  options={[
+                    { value: 0, label: "Seleccionar trabajador" },
+                    ...workers.map((worker) => ({ value: worker.id, label: worker.nombre })),
+                  ]}
+                />
               </div>
               
               <div>
@@ -282,17 +289,14 @@ export default function EditPrintPage() {
                   Material *
                 </label>
                 <Select
-                  value={formData.material_id}
+                  value={formData.material_id ?? 0}
                   onChange={(e) => handleInputChange('material_id', parseInt(e.target.value))}
                   required
-                >
-                  <option value={0}>Seleccionar material</option>
-                  {materials.map(material => (
-                    <option key={material.id} value={material.id}>
-                      {material.nombre}
-                    </option>
-                  ))}
-                </Select>
+                  options={[
+                    { value: 0, label: "Seleccionar material" },
+                    ...materials.map((material) => ({ value: material.id, label: material.nombre })),
+                  ]}
+                />
               </div>
               
               <div>

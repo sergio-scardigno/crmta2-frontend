@@ -91,7 +91,10 @@ export default function EditWorkerPage({ params }: EditWorkerPageProps) {
     }
   };
 
-  const handleInputChange = (field: keyof UpdateWorkerData, value: string | number) => {
+  const handleInputChange = (
+    field: keyof UpdateWorkerData,
+    value: string | number | null | undefined
+  ) => {
     setFormData(prev => ({
       ...prev,
       [field]: value

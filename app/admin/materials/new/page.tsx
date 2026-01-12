@@ -68,7 +68,7 @@ export default function NewMaterialPage() {
     }
   };
 
-  const handleInputChange = (field: string, value: string | number) => {
+  const handleInputChange = (field: string, value: string | number | undefined) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -76,11 +76,15 @@ export default function NewMaterialPage() {
     
     // Recalcular costo por gramo cuando cambian cantidad, unidad o costo por unidad
     if (field === "cantidad_de_material" || field === "costo_por_unidad_local" || field === "unidad_de_medida") {
-      const cantidad = field === "cantidad_de_material" ? Number(value) : formData.cantidad_de_material;
+      const cantidad =
+        field === "cantidad_de_material" ? Number(value ?? 0) : formData.cantidad_de_material;
       const unidad = field === "unidad_de_medida" ? String(value) : formData.unidad_de_medida;
-      const costoLocal = field === "costo_por_unidad_local" ? Number(value) : formData.costo_por_unidad_local;
+      const costoLocal =
+        field === "costo_por_unidad_local"
+          ? Number(value ?? 0)
+          : Number(formData.costo_por_unidad_local ?? 0);
       
-      if (cantidad > 0 && costoLocal && costoLocal > 0) {
+      if (cantidad > 0 && costoLocal > 0) {
         // Convertir cantidad a gramos si la unidad es kilogramos
         const cantidadEnGramos = unidad === "kilogramos" ? cantidad * 1000 : cantidad;
         const costoPorGramo = costoLocal / cantidadEnGramos;

@@ -1,8 +1,9 @@
-import { AlertHTMLAttributes, forwardRef } from "react";
+import { forwardRef, HTMLAttributes, ReactNode } from "react";
 import { cn } from "@/app/lib/utils";
 
-interface AlertProps extends AlertHTMLAttributes<HTMLDivElement> {
+interface AlertProps extends HTMLAttributes<HTMLDivElement> {
   variant?: "success" | "error" | "warning" | "info";
+  children?: ReactNode;
 }
 
 const Alert = forwardRef<HTMLDivElement, AlertProps>(

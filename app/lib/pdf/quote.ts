@@ -45,15 +45,11 @@ export async function generateQuotePdf({
     throw new Error('generateQuotePdf solo puede ejecutarse en el cliente');
   }
   
-  const jsPDFModule = await import('jspdf');
-  // jsPDF v4 puede exportar de diferentes formas
-  const jsPDF = (jsPDFModule.default && jsPDFModule.default.jsPDF) 
-    ? jsPDFModule.default.jsPDF 
-    : jsPDFModule.default 
-    ? jsPDFModule.default 
-    : jsPDFModule.jsPDF 
-    ? jsPDFModule.jsPDF 
-    : jsPDFModule;
+  const jsPDFModule: any = await import("jspdf");
+  // jsPDF puede exportar de diferentes formas según versión/bundler.
+  // Usamos `any` para evitar problemas de tipado durante el build.
+  const jsPDF =
+    jsPDFModule?.jsPDF ?? jsPDFModule?.default?.jsPDF ?? jsPDFModule?.default ?? jsPDFModule;
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
   const margin = 20;

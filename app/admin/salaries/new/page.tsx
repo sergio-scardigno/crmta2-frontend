@@ -45,7 +45,10 @@ export default function NewSalaryPage() {
     }
   };
 
-  const handleInputChange = (field: keyof CreateSalaryData, value: string | number) => {
+  const handleInputChange = (
+    field: keyof CreateSalaryData,
+    value: string | number | undefined
+  ) => {
     setFormData(prev => ({
       ...prev,
       [field]: value

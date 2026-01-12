@@ -9,11 +9,11 @@ interface ErrorState {
 export function useErrorHandler() {
   const [error, setError] = useState<ErrorState>({ message: null });
 
-  const handleError = useCallback((err: unknown) => {
+  const handleError = useCallback((err: unknown, fallbackMessage?: string) => {
     console.error("Error:", err);
     
     if (err instanceof Error) {
-      setError({ message: err.message });
+      setError({ message: fallbackMessage ?? err.message });
       return;
     }
 
@@ -22,18 +22,18 @@ export function useErrorHandler() {
       const apiError = err as ApiError;
       
       if (typeof apiError.detail === "string") {
-        setError({ message: apiError.detail });
+        setError({ message: fallbackMessage ?? apiError.detail });
       } else if (Array.isArray(apiError.detail)) {
         const details = apiError.detail.map((item) => item.msg);
         setError({ 
-          message: "Error de validación", 
+          message: fallbackMessage ?? "Error de validación", 
           details 
         });
       }
       return;
     }
 
-    setError({ message: "Ha ocurrido un error inesperado" });
+    setError({ message: fallbackMessage ?? "Ha ocurrido un error inesperado" });
   }, []);
 
   const clearError = useCallback(() => {

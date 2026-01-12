@@ -129,7 +129,7 @@ export default function MaterialsPage() {
                         Editar
                       </Button>
                       <Button
-                        variant="destructive"
+                        variant="danger"
                         size="sm"
                         onClick={() => handleDelete(material.id)}
                         disabled={deletingId === material.id}

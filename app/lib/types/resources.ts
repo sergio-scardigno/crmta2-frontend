@@ -51,6 +51,14 @@ export interface Material {
   costo_por_gramo: number;
 }
 
+// Para crear/actualizar materiales, el backend calcula y persiste los costos en USD
+// (`costo_por_unidad`, `costo_por_gramo`) a partir de los campos *_local.
+export type CreateMaterialData = Omit<Material, "id" | "costo_por_unidad" | "costo_por_gramo"> & {
+  costo_por_unidad_local?: number;
+  costo_por_gramo_local?: number;
+};
+export type UpdateMaterialData = Partial<CreateMaterialData>;
+
 export interface Setting {
   id: number;
   key: string;
@@ -98,6 +106,12 @@ export interface PrintExtra {
   created_at: string;
   updated_at: string;
 }
+
+// Payload de creación de extras (el backend calcula montos totales y timestamps)
+export type CreatePrintExtraData = Omit<
+  PrintExtra,
+  "id" | "monto_total_ars" | "monto_total_usd" | "created_at" | "updated_at"
+>;
 
 export interface Print {
   id: number;
@@ -153,8 +167,12 @@ export type UpdateWorkerData = Partial<Worker> & {
 export type CreateSettingData = Omit<Setting, 'id'>;
 export type UpdateSettingData = Partial<Setting>;
 
-export type CreatePrintData = Omit<Print, 'id' | 'created_at' | 'updated_at' | 'costo_maquinas_usd' | 'costo_trabajadores_usd' | 'costo_materiales_usd' | 'costo_desperdicio_usd' | 'costo_total_usd' | 'costo_unitario_usd' | 'costo_sugerido_total_usd' | 'costo_sugerido_unitario_usd' | 'costo_sugerido_total_local' | 'costo_sugerido_unitario_local' | 'tarifa_mano_obra_usd_h' | 'costo_labor_usd' | 'minimo_trabajo_ars' | 'precio_calculado_ars' | 'precio_final_ars' | 'machine' | 'worker' | 'material'> & {
+export type CreatePrintData = Omit<
+  Print,
+  "id" | "created_at" | "updated_at" | "machine" | "worker" | "material" | "extras"
+> & {
   worker_id?: number | null; // Opcional: puede ser null para "Sin empleado"
+  extras?: CreatePrintExtraData[];
 };
 export type UpdatePrintData = Partial<CreatePrintData>;
 
@@ -177,7 +195,10 @@ export interface FixedExpense {
   updated_at: string;
 }
 
-export type CreateFixedExpenseData = Omit<FixedExpense, 'id' | 'created_at' | 'updated_at'> & {
+// Para crear un gasto fijo aceptamos monto en USD o en ARS.
+// El backend convierte ARS->USD cuando se envía `monto_ars`.
+export type CreateFixedExpenseData = Omit<FixedExpense, 'id' | 'created_at' | 'updated_at' | 'monto_usd'> & {
+  monto_usd?: number;
   monto_ars?: number; // Opcional: si se proporciona, se convierte a USD
 };
 export type UpdateFixedExpenseData = Partial<CreateFixedExpenseData> & {
@@ -193,7 +214,10 @@ export interface Salary {
   updated_at: string;
 }
 
-export type CreateSalaryData = Omit<Salary, 'id' | 'created_at' | 'updated_at'> & {
+// Para crear un salario aceptamos monto en USD o en ARS.
+// El backend convierte ARS->USD cuando se envía `salario_mensual_ars`.
+export type CreateSalaryData = Omit<Salary, "id" | "created_at" | "updated_at" | "salario_mensual"> & {
+  salario_mensual?: number;
   salario_mensual_ars?: number; // Opcional: si se proporciona, se convierte a USD
 };
 export type UpdateSalaryData = Partial<CreateSalaryData> & {

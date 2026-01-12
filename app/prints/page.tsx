@@ -6,7 +6,7 @@ import { fetchPrints, deletePrint } from '@/app/lib/resources';
 import { useErrorHandler } from '@/app/hooks/useErrorHandler';
 import { formatCurrency } from '@/app/lib/utils';
 import { Button } from '@/app/components/ui/Button';
-import { Table } from '@/app/components/ui/Table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/app/components/ui/Table';
 import { Alert } from '@/app/components/ui/Alert';
 import type { Print } from '@/app/lib/types/resources';
 
@@ -67,7 +67,20 @@ export default function PrintsPage() {
         </Link>
       </div>
 
-      {error && <Alert type="error" message={error} />}
+      {error.message && (
+        <Alert variant="error" className="mb-6">
+          <div>
+            <p className="font-medium">{error.message}</p>
+            {error.details && (
+              <ul className="mt-2 list-disc list-inside text-sm">
+                {error.details.map((detail, index) => (
+                  <li key={index}>{detail}</li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </Alert>
+      )}
 
       {prints.length === 0 ? (
         <div className="text-center py-12">
@@ -88,73 +101,77 @@ export default function PrintsPage() {
         </div>
       ) : (
         <div className="bg-neutral-900/50 rounded-lg border border-neutral-700 overflow-hidden">
-          <Table
-            headers={[
-              'Nombre',
-              'Máquina',
-              'Trabajador',
-              'Material',
-              'Horas',
-              'Unidades',
-              'Costo Total USD',
-              'Costo Unitario USD',
-              'Precio Sugerido USD',
-              'Fecha',
-              'Acciones'
-            ]}
-            data={prints.map(print => [
-              <div key="nombre" className="font-medium text-white">
-                {print.nombre}
-              </div>,
-              <div key="machine" className="text-sm text-neutral-300">
-                {print.machine?.nombre || `ID: ${print.machine_id}`}
-              </div>,
-              <div key="worker" className="text-sm text-neutral-300">
-                {print.worker?.nombre || `ID: ${print.worker_id}`}
-              </div>,
-              <div key="material" className="text-sm text-neutral-300">
-                {print.material?.nombre || `ID: ${print.material_id}`}
-              </div>,
-              <div key="horas" className="text-sm text-neutral-300">
-                {print.horas_impresion}h
-              </div>,
-              <div key="unidades" className="text-sm text-neutral-300">
-                {print.cantidad_unidades}
-              </div>,
-              <div key="costo_total" className="text-sm text-emerald-400 font-medium">
-                ${print.costo_total_usd.toFixed(2)}
-              </div>,
-              <div key="costo_unitario" className="text-sm text-emerald-400 font-medium">
-                ${print.costo_unitario_usd.toFixed(2)}
-              </div>,
-              <div key="precio_sugerido" className="text-sm text-blue-400 font-medium">
-                ${print.costo_sugerido_unitario_usd.toFixed(2)}
-              </div>,
-              <div key="fecha" className="text-sm text-neutral-400">
-                {new Date(print.created_at).toLocaleDateString('es-ES')}
-              </div>,
-              <div key="acciones" className="flex space-x-2">
-                <Link href={`/prints/${print.id}`}>
-                  <Button variant="ghost" size="sm">
-                    Ver
-                  </Button>
-                </Link>
-                <Link href={`/prints/${print.id}/edit`}>
-                  <Button variant="ghost" size="sm">
-                    Editar
-                  </Button>
-                </Link>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleDelete(print.id, print.nombre)}
-                  className="text-red-400 hover:text-red-300"
-                >
-                  Eliminar
-                </Button>
-              </div>
-            ])}
-          />
+          <Table>
+            <TableHeader>
+              <TableRow>
+                {[
+                  "Nombre",
+                  "Máquina",
+                  "Trabajador",
+                  "Material",
+                  "Horas",
+                  "Unidades",
+                  "Costo Total USD",
+                  "Costo Unitario USD",
+                  "Precio Sugerido USD",
+                  "Fecha",
+                  "Acciones",
+                ].map((h) => (
+                  <TableHead key={h}>{h}</TableHead>
+                ))}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {prints.map((print) => (
+                <TableRow key={print.id}>
+                  <TableCell className="font-medium text-white">{print.nombre}</TableCell>
+                  <TableCell className="text-sm text-neutral-300">
+                    {print.machine?.nombre || `ID: ${print.machine_id}`}
+                  </TableCell>
+                  <TableCell className="text-sm text-neutral-300">
+                    {print.worker?.nombre || (print.worker_id ? `ID: ${print.worker_id}` : "—")}
+                  </TableCell>
+                  <TableCell className="text-sm text-neutral-300">
+                    {print.material?.nombre || `ID: ${print.material_id}`}
+                  </TableCell>
+                  <TableCell className="text-sm text-neutral-300">{print.horas_impresion}h</TableCell>
+                  <TableCell className="text-sm text-neutral-300">{print.cantidad_unidades}</TableCell>
+                  <TableCell className="text-sm text-emerald-400 font-medium">
+                    ${print.costo_total_usd.toFixed(2)}
+                  </TableCell>
+                  <TableCell className="text-sm text-emerald-400 font-medium">
+                    ${print.costo_unitario_usd.toFixed(2)}
+                  </TableCell>
+                  <TableCell className="text-sm text-blue-400 font-medium">
+                    ${print.costo_sugerido_unitario_usd.toFixed(2)}
+                  </TableCell>
+                  <TableCell className="text-sm text-neutral-400">
+                    {new Date(print.created_at).toLocaleDateString("es-ES")}
+                  </TableCell>
+                  <TableCell className="flex space-x-2">
+                    <Link href={`/prints/${print.id}`}>
+                      <Button variant="ghost" size="sm">
+                        Ver
+                      </Button>
+                    </Link>
+                    <Link href={`/prints/${print.id}/edit`}>
+                      <Button variant="ghost" size="sm">
+                        Editar
+                      </Button>
+                    </Link>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDelete(print.id, print.nombre)}
+                      className="text-red-400 hover:text-red-300"
+                    >
+                      Eliminar
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </div>
       )}
 

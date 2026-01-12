@@ -86,7 +86,7 @@ export default function NewWorkerPage() {
     }
   };
 
-  const handleInputChange = (field: string, value: string | number) => {
+  const handleInputChange = (field: string, value: string | number | boolean | null | undefined) => {
     setFormData(prev => ({
       ...prev,
       [field]: value

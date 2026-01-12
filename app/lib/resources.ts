@@ -14,10 +14,12 @@ import type {
   TenantLoginResponse,
   Worker,
   CreateFixedExpenseData,
+  CreateMaterialData,
   CreateModel3DData,
   CreatePrintData,
   CreateSalaryData,
   UpdateFixedExpenseData,
+  UpdateMaterialData,
   UpdateModel3DData,
   UpdatePrintData,
   UpdateSalaryData,
@@ -74,11 +76,11 @@ export async function deleteTenant(id: number) {
 }
 
 export async function regenerateTenantKey(id: number) {
-  return api.post<Tenant>(`/tenants/${id}/regenerate-key`);
+  return api.post<Tenant>(`/tenants/${id}/regenerate-key`, {});
 }
 
 export async function createTenantDatabase(id: number) {
-  return api.post<void>(`/tenants/${id}/database/create`);
+  return api.post<void>(`/tenants/${id}/database/create`, {});
 }
 
 export async function deleteTenantDatabase(id: number) {
@@ -86,11 +88,11 @@ export async function deleteTenantDatabase(id: number) {
 }
 
 export async function markTenantForDeletion(id: number) {
-  return api.put<Tenant>(`/tenants/${id}/mark-for-deletion`);
+  return api.put<Tenant>(`/tenants/${id}/mark-for-deletion`, {});
 }
 
 export async function unmarkTenantForDeletion(id: number) {
-  return api.put<Tenant>(`/tenants/${id}/unmark-for-deletion`);
+  return api.put<Tenant>(`/tenants/${id}/unmark-for-deletion`, {});
 }
 
 export async function fetchTenantsMarkedForDeletion() {
@@ -107,11 +109,11 @@ export async function adminListTenants() {
 }
 
 export async function adminMarkTenantForDeletion(id: number) {
-  return api.put<Tenant>(`/admin/tenants/${id}/mark-for-deletion`);
+  return api.put<Tenant>(`/admin/tenants/${id}/mark-for-deletion`, {});
 }
 
 export async function adminUnmarkTenantForDeletion(id: number) {
-  return api.put<Tenant>(`/admin/tenants/${id}/unmark-for-deletion`);
+  return api.put<Tenant>(`/admin/tenants/${id}/unmark-for-deletion`, {});
 }
 
 // Máquinas - CRUD completo
@@ -165,11 +167,11 @@ export async function fetchMaterial(id: number) {
   return api.get<Material>(`/materials/${id}`);
 }
 
-export async function createMaterial(data: Omit<Material, 'id'> & { costo_por_unidad_local?: number; costo_por_gramo_local?: number }) {
+export async function createMaterial(data: CreateMaterialData) {
   return api.post<Material>("/materials", data);
 }
 
-export async function updateMaterial(id: number, data: Partial<Material> & { costo_por_unidad_local?: number; costo_por_gramo_local?: number }) {
+export async function updateMaterial(id: number, data: UpdateMaterialData) {
   return api.put<Material>(`/materials/${id}`, data);
 }
 

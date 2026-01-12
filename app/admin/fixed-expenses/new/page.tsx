@@ -46,7 +46,10 @@ export default function NewFixedExpensePage() {
     }
   };
 
-  const handleInputChange = (field: keyof CreateFixedExpenseData, value: string | number | null) => {
+  const handleInputChange = (
+    field: keyof CreateFixedExpenseData,
+    value: string | number | null | undefined
+  ) => {
     setFormData(prev => ({
       ...prev,
       [field]: value

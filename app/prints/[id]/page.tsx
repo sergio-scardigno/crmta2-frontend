@@ -101,7 +101,20 @@ export default function PrintDetailPage() {
         </div>
       </div>
 
-      {error && <Alert type="error" message={error} />}
+      {error.message && (
+        <Alert variant="error" className="mb-6">
+          <div>
+            <p className="font-medium">{error.message}</p>
+            {error.details && (
+              <ul className="mt-2 list-disc list-inside text-sm">
+                {error.details.map((detail, index) => (
+                  <li key={index}>{detail}</li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </Alert>
+      )}
 
       {/* Información básica */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
