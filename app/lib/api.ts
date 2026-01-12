@@ -1,20 +1,23 @@
-﻿// En producción (Vercel), usar rewrites de Next.js para evitar mixed content (HTTPS -> HTTP)
-// En desarrollo, usar la URL completa del backend
+﻿// Determinar la URL base de la API
+// En desarrollo: usar rewrites de Next.js (/api -> localhost:8000/api)
+// En producción: usar la URL completa del backend desde NEXT_PUBLIC_API_BASE_URL
 const getApiBaseUrl = () => {
-  // Si estamos en el servidor o en producción, usar rewrites
+  // Si estamos en el servidor (SSR), usar la URL completa del backend
   if (typeof window === 'undefined') {
+    return process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000/api';
+  }
+  
+  // En el cliente (navegador)
+  const envUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+  
+  // Si no hay URL configurada o es localhost, usar rewrites
+  if (!envUrl || envUrl.includes('localhost')) {
     return '/api';
   }
   
-  // Si NEXT_PUBLIC_API_BASE_URL está configurado y es localhost, usarlo
-  const envUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
-  if (envUrl && envUrl.includes('localhost')) {
-    return envUrl;
-  }
-  
-  // En producción (Vercel), usar rewrites para evitar mixed content
-  // Los rewrites de Next.js permiten hacer peticiones HTTP desde el servidor
-  return '/api';
+  // En producción, usar la URL completa del backend
+  // NOTA: Esto requiere que el backend permita CORS y sea accesible desde el navegador
+  return envUrl;
 };
 
 const API_BASE_URL = getApiBaseUrl();

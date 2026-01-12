@@ -71,10 +71,11 @@ NEXT_PUBLIC_API_BASE_URL=http://localhost:8000/api
 
 1. **Variables NEXT_PUBLIC_**: Las variables que empiezan con `NEXT_PUBLIC_` son expuestas al cliente y están disponibles en el navegador. **No incluyas información sensible** como tokens o secretos.
 
-2. **Rewrites de Next.js**: El proyecto usa **rewrites de Next.js** para evitar problemas de mixed content (HTTPS → HTTP). Las peticiones se hacen desde el servidor de Vercel, no desde el navegador, por lo que:
-   - ✅ No necesitas configurar CORS en el backend para Vercel (las peticiones vienen del servidor)
-   - ✅ Funciona aunque el backend use HTTP y Vercel use HTTPS
-   - ✅ El frontend usa `/api` como URL base, y Next.js lo reescribe automáticamente
+2. **Estrategia de Conexión**: 
+   - **En desarrollo**: Usa rewrites de Next.js (`/api` → `localhost:8000/api`)
+   - **En producción (Vercel)**: Hace peticiones directas desde el navegador al backend
+   - ⚠️ **IMPORTANTE**: En producción, el backend DEBE permitir CORS desde tu dominio de Vercel
+   - ⚠️ **IMPORTANTE**: Si el backend usa HTTP y Vercel HTTPS, puede haber problemas de mixed content. Considera usar HTTPS en el backend o un proxy.
 
 3. **CORS en Backend (Opcional)**: Si quieres permitir peticiones directas desde el navegador (no recomendado en producción), el backend debe incluir en `CORS_ORIGINS`:
    - `https://tu-app.vercel.app`
@@ -114,14 +115,30 @@ Después del deploy, verifica que todo funciona:
    - Deberías ver un JSON con información de la API
    - Si no responde, el backend puede estar caído o el firewall bloqueando
 
-3. **Verificar rewrites en next.config.mjs:**
-   - El archivo `next.config.mjs` debe tener configurados los rewrites
-   - Los rewrites permiten que las peticiones se hagan desde el servidor de Vercel
-   - Esto evita problemas de mixed content (HTTPS → HTTP)
+3. **Verificar CORS en el backend:**
+   - El backend DEBE tener configurado CORS para permitir tu dominio de Vercel
+   - En el backend, configura la variable `CORS_ORIGINS` con tu dominio de Vercel:
+     ```env
+     CORS_ORIGINS=https://tu-app.vercel.app,https://tu-app-git-main-tu-usuario.vercel.app
+     ```
+   - Reinicia el backend después de cambiar CORS_ORIGINS
 
 4. **Revisar logs de Vercel:**
    - Ve a Vercel Dashboard > Deployments > [tu deployment] > Functions
    - Revisa los logs para ver errores específicos
+
+### Error: 502 "ROUTER_EXTERNAL_TARGET_CONNECTION_ERROR"
+
+**Problema:** Vercel no puede conectarse al backend (esto ocurre con rewrites).
+
+**Solución:**
+- Este error indica que el backend no es accesible desde los servidores de Vercel
+- La configuración actual hace peticiones directas desde el navegador, no desde el servidor
+- Si ves este error, verifica:
+  1. Que el backend esté corriendo y accesible públicamente
+  2. Que el firewall permita conexiones al puerto 8000
+  3. Que CORS esté configurado correctamente en el backend
+  4. Haz un nuevo deploy después de los cambios
 
 ### Error: "CORS policy" (si usas peticiones directas)
 
