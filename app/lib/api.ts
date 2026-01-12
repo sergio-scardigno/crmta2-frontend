@@ -1,4 +1,23 @@
-﻿const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "/api";
+﻿// En producción (Vercel), usar rewrites de Next.js para evitar mixed content (HTTPS -> HTTP)
+// En desarrollo, usar la URL completa del backend
+const getApiBaseUrl = () => {
+  // Si estamos en el servidor o en producción, usar rewrites
+  if (typeof window === 'undefined') {
+    return '/api';
+  }
+  
+  // Si NEXT_PUBLIC_API_BASE_URL está configurado y es localhost, usarlo
+  const envUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+  if (envUrl && envUrl.includes('localhost')) {
+    return envUrl;
+  }
+  
+  // En producción (Vercel), usar rewrites para evitar mixed content
+  // Los rewrites de Next.js permiten hacer peticiones HTTP desde el servidor
+  return '/api';
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 // Función para obtener el tenant actual del localStorage
 function getCurrentTenant(): string | null {

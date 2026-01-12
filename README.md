@@ -40,8 +40,10 @@ NEXT_PUBLIC_API_BASE_URL=http://localhost:8000/api
 **En producción**, configurar la URL del backend desplegado:
 
 ```env
-NEXT_PUBLIC_API_BASE_URL=https://api.tu-dominio.com/api
+NEXT_PUBLIC_API_BASE_URL=http://srv970964.hstgr.cloud:8000/api
 ```
+
+> 📖 **Para configuración detallada en Vercel**, ver [VERCEL_ENV_SETUP.md](./VERCEL_ENV_SETUP.md)
 
 ### Configuración de CORS en Backend
 
@@ -101,10 +103,10 @@ vercel
 En el dashboard de Vercel, ir a **Settings → Environment Variables** y agregar:
 
 ```
-NEXT_PUBLIC_API_BASE_URL=https://api.tu-dominio.com/api
+NEXT_PUBLIC_API_BASE_URL=http://srv970964.hstgr.cloud:8000/api
 ```
 
-**Importante**: Reemplazar `https://api.tu-dominio.com/api` con la URL real de tu backend en producción.
+> 📖 **Para instrucciones detalladas paso a paso**, ver [VERCEL_ENV_SETUP.md](./VERCEL_ENV_SETUP.md)
 
 ### 4. Configurar CORS en el Backend
 
