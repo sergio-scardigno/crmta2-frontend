@@ -13,6 +13,7 @@ import {
   createPrintFromCalculation,
 } from "@/app/lib/resources";
 import { generateQuotePdf } from "@/app/lib/pdf/quote";
+import { Select } from "@/app/components/ui/Select";
 import type {
   CostBreakdown,
   Machine,
@@ -66,6 +67,8 @@ export default function NewPrintPage() {
   const [hours, setHours] = useState(1);
   const [units, setUnits] = useState(1);
   const [dollarValue, setDollarValue] = useState(900);
+  const [referenciaTipo, setReferenciaTipo] = useState<string>("");
+  const [comisionPlataformaPct, setComisionPlataformaPct] = useState<number>(18);
   const [benefit, setBenefit] = useState<number | null>(null);
   
   // Nuevos campos para tiempos y mano de obra
@@ -145,7 +148,23 @@ export default function NewPrintPage() {
     void loadData();
   }, [currentTenant, currentTenantKey]);
 
-  // Mostrar loading mientras se verifica la autenticación
+  const benefitPercent = useMemo(() => {
+    if (benefit === null) return "";
+    return `${(benefit * 100).toFixed(0)}%`;
+  }, [benefit]);
+
+  const referenciaOptions = [
+    { value: "", label: "Sin referencia" },
+    { value: "minorista", label: "Precio Minorista (x4)" },
+    { value: "mayorista", label: "Precio Mayorista (x3)" },
+    { value: "llaveros", label: "Precio Llaveros (x5)" },
+  ];
+
+  const plaTotal = useMemo(() => {
+    return materialRows.reduce((sum, row) => sum + row.cantidad_usada, 0);
+  }, [materialRows]);
+
+  // Mostrar loading mientras se verifica la autenticación (después de todos los hooks)
   if (currentTenant === null || currentTenantKey === null) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -156,16 +175,6 @@ export default function NewPrintPage() {
       </div>
     );
   }
-
-  const benefitPercent = useMemo(() => {
-    if (benefit === null) return "";
-    return `${(benefit * 100).toFixed(0)}%`;
-  }, [benefit]);
-
-  // Calcular PLA total (suma de cantidad_usada de todas las filas)
-  const plaTotal = useMemo(() => {
-    return materialRows.reduce((sum, row) => sum + row.cantidad_usada, 0);
-  }, [materialRows]);
 
   // Handler para actualizar PLA usado en el material principal
   const handlePlaUsadoChange = (value: number) => {
@@ -227,6 +236,8 @@ export default function NewPrintPage() {
         tiempo_disenio_horas: tiempoDisenioH ?? undefined,
         minimo_trabajo_ars: minimoTrabajoArs ?? undefined,
         tarifa_mano_obra_usd_h: tarifaManoObraUsdH ?? undefined,
+        comision_plataforma_pct: comisionPlataformaPct > 0 ? comisionPlataformaPct / 100 : 0,
+        referencia_tipo: referenciaTipo || undefined,
         adicionales: adicionalesPreparados,
       };
 
@@ -426,6 +437,30 @@ export default function NewPrintPage() {
                 <span className="text-neutral-400 ml-2">(incluye materiales adicionales)</span>
               </p>
             )}
+          </label>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Select
+            label="Referencia de precio"
+            options={referenciaOptions}
+            value={referenciaTipo}
+            onChange={(event) => setReferenciaTipo(event.target.value)}
+            helperText="Aplica multiplicador al total final (minorista, mayorista o llaveros)."
+          />
+
+          <label className="grid gap-2">
+            <span className="text-base font-medium text-neutral-200">Comisión MercadoLibre (%)</span>
+            <input
+              type="number"
+              min={0}
+              max={100}
+              step={0.1}
+              className="text-lg rounded-lg border-2 border-emerald-600 bg-neutral-900 p-4 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-400"
+              value={comisionPlataformaPct}
+              onChange={(event) => setComisionPlataformaPct(Number(event.target.value))}
+              placeholder="Ej: 18"
+            />
           </label>
         </div>
       </section>
@@ -815,114 +850,116 @@ export default function NewPrintPage() {
           <h2 className="text-xl font-semibold text-emerald-100">Resumen de Costos</h2>
           
           {(() => {
-            const precioCalculadoArs =
-              result.precio_calculado_ars ?? result.costo_sugerido_total_local;
-            const precioFinalArs = result.precio_final_ars ?? precioCalculadoArs;
-            const cargoConfiguradoArs =
-              minimoTrabajoArs !== null && minimoTrabajoArs !== undefined
-                ? minimoTrabajoArs
-                : null;
-            const adicionalesTotalArs = result.adicionales_total_ars ?? 0;
-            const adicionalesTotalUsd = result.adicionales_total_usd ?? (dollarValue > 0 ? adicionalesTotalArs / dollarValue : 0);
-            const precioFinalUsd =
-              dollarValue > 0 ? precioFinalArs / dollarValue : null;
+            const valorDolar = dollarValue > 0 ? dollarValue : 1;
+            // Costos en ARS (como en la referencia)
+            const materialArs = (result.costo_materiales_usd + result.costo_desperdicio_usd) * valorDolar;
+            const electricidadArs = result.costo_electricidad_usd * valorDolar;
+            const desgasteArs = result.costo_maquinas_usd * valorDolar;
+            const margenErrorArs = result.costo_seguro_fallos_usd * valorDolar;
+            const insumosArs = 0; // fijo por ahora
+            const otrosArs = (result.costo_gastos_fijos_usd + result.costo_labor_usd + result.costo_trabajadores_usd) * valorDolar;
+            const costoProduccionArs = materialArs + electricidadArs + desgasteArs + margenErrorArs;
+            const totalCostosArs = result.total_costos_ars ?? result.costo_base_usd * valorDolar;
+            const totalACobrarArs = result.total_a_cobrar_ars ?? totalCostosArs * (result.referencia_multiplicador ?? 1);
+            const precioConComisionArs = result.precio_con_comision_ars ?? totalACobrarArs * (1 + comisionPlataformaPct / 100);
+            // Distribución de costos (sobre total a cobrar)
+            const pctMaterial = totalACobrarArs > 0 ? (materialArs / totalACobrarArs) * 100 : 0;
+            const pctMargenError = totalACobrarArs > 0 ? (margenErrorArs / totalACobrarArs) * 100 : 0;
+            const pctGanancia = totalACobrarArs > 0 ? ((totalACobrarArs - totalCostosArs) / totalACobrarArs) * 100 : 0;
+            const precioFinalArs = result.precio_final_ars ?? totalACobrarArs;
             const unitarioFinalArs = units > 0 ? precioFinalArs / units : null;
-            const unitarioFinalUsd =
-              precioFinalUsd !== null && units > 0 ? precioFinalUsd / units : null;
-            const cargoAplicadoArs = Math.max(
-              0,
-              (precioFinalArs - precioCalculadoArs) - adicionalesTotalArs,
-            );
-            const cargoAplicadoUsd =
-              dollarValue > 0 ? cargoAplicadoArs / dollarValue : null;
+            const unitarioFinalUsd = dollarValue > 0 && unitarioFinalArs !== null ? unitarioFinalArs / dollarValue : null;
+            const adicionalesTotalArs = result.adicionales_total_ars ?? 0;
 
             return (
               <>
-                {/* Sección: Desglose de Costos */}
+                {/* Costos Base (como en la referencia) */}
                 <div className="rounded-lg border border-emerald-700/60 bg-emerald-900/20 p-4">
                   <h3 className="text-base font-semibold text-emerald-200 mb-3 pb-2 border-b border-emerald-700/40">
-                    Desglose de Costos (USD)
+                    Costos Base
                   </h3>
                   <div className="grid gap-2">
                     <div className="flex justify-between items-center py-1">
-                      <span className="text-neutral-300">Máquinas:</span>
-                      <span className="font-medium text-emerald-300">${result.costo_maquinas_usd.toFixed(2)}</span>
+                      <span className="text-neutral-300">Material</span>
+                      <span className="font-medium text-emerald-300">ARS $ {materialArs.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                     </div>
                     <div className="flex justify-between items-center py-1">
-                      <span className="text-neutral-300">Trabajadores:</span>
-                      <span className="font-medium text-emerald-300">${result.costo_trabajadores_usd.toFixed(2)}</span>
+                      <span className="text-neutral-300">Electricidad</span>
+                      <span className="font-medium text-emerald-300">ARS $ {electricidadArs.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                     </div>
                     <div className="flex justify-between items-center py-1">
-                      <span className="text-neutral-300">Materiales:</span>
-                      <span className="font-medium text-emerald-300">${result.costo_materiales_usd.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between items-center py-1">
-                      <span className="text-neutral-300">Desperdicio:</span>
-                      <span className="font-medium text-emerald-300">${result.costo_desperdicio_usd.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between items-center py-1">
-                      <span className="text-neutral-300">Gastos Fijos (prorrateo):</span>
-                      <span className="font-medium text-emerald-300">${result.costo_gastos_fijos_usd.toFixed(2)}</span>
-                    </div>
-                    <div className="mt-2 pt-2 border-t border-emerald-700/40 flex justify-between items-center">
-                      <span className="font-semibold text-emerald-100">Subtotal Costos:</span>
-                      <span className="font-bold text-lg text-emerald-200">${result.costo_total_usd.toFixed(2)}</span>
+                      <span className="text-neutral-300">Desgaste</span>
+                      <span className="font-medium text-emerald-300">ARS $ {desgasteArs.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                     </div>
                   </div>
                 </div>
 
-                {/* Sección: Precio Final y Conversión */}
+                {/* Costos Adicionales */}
                 <div className="rounded-lg border border-emerald-700/60 bg-emerald-900/20 p-4">
                   <h3 className="text-base font-semibold text-emerald-200 mb-3 pb-2 border-b border-emerald-700/40">
-                    Precio Final y Conversión (USD/ARS)
+                    Costos Adicionales
                   </h3>
                   <div className="grid gap-2">
                     <div className="flex justify-between items-center py-1">
-                      <span className="text-neutral-300">Total USD (calculado):</span>
-                      <span className="font-medium text-blue-300">${result.costo_sugerido_total_usd.toFixed(2)}</span>
+                      <span className="text-neutral-300">Margen Error</span>
+                      <span className="font-medium text-emerald-300">ARS $ {margenErrorArs.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                     </div>
                     <div className="flex justify-between items-center py-1">
-                      <span className="text-neutral-300">Total ARS (calculado):</span>
-                      <span className="font-medium text-blue-300">${precioCalculadoArs.toFixed(2)}</span>
+                      <span className="text-neutral-300">Costo Producción</span>
+                      <span className="font-medium text-emerald-300">ARS $ {costoProduccionArs.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                     </div>
                     <div className="flex justify-between items-center py-1">
-                      <span className="text-neutral-300">Cargo fijo configurado:</span>
-                      <span className="font-medium text-neutral-400">
-                        {cargoConfiguradoArs !== null ? `$${cargoConfiguradoArs.toFixed(2)}` : "— (usa setting)"}
-                      </span>
+                      <span className="text-neutral-300">Insumos (fijo)</span>
+                      <span className="font-medium text-emerald-300">ARS $ {insumosArs.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                     </div>
-                    {adicionalesTotalArs > 0 && (
+                    {otrosArs > 0 && (
                       <div className="flex justify-between items-center py-1">
-                        <span className="text-neutral-300">Adicionales (ítems):</span>
-                        <span className="font-medium text-purple-300">
-                          +${adicionalesTotalArs.toFixed(2)} ARS
-                          {adicionalesTotalUsd ? ` (+$${adicionalesTotalUsd.toFixed(2)} USD)` : ""}
-                        </span>
-                      </div>
-                    )}
-                    {cargoAplicadoArs > 0 && (
-                      <div className="flex justify-between items-center py-1">
-                        <span className="text-neutral-300">Cargo aplicado:</span>
-                        <span className="font-medium text-orange-300">
-                          +${cargoAplicadoArs.toFixed(2)} ARS
-                          {cargoAplicadoUsd !== null ? ` (+$${cargoAplicadoUsd.toFixed(2)} USD)` : ""}
-                        </span>
+                        <span className="text-neutral-300">Otros (gastos fijos, mano de obra)</span>
+                        <span className="font-medium text-emerald-300">ARS $ {otrosArs.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                       </div>
                     )}
                     <div className="mt-2 pt-2 border-t border-emerald-700/40 flex justify-between items-center">
-                      <span className="font-semibold text-emerald-100">Total ARS (final):</span>
-                      <span className="font-bold text-lg text-emerald-200">${precioFinalArs.toFixed(2)}</span>
+                      <span className="font-semibold text-emerald-100">Total Costos</span>
+                      <span className="font-bold text-lg text-emerald-200">ARS $ {totalCostosArs.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                     </div>
-                    {precioFinalUsd !== null && (
-                      <div className="flex justify-between items-center py-1">
-                        <span className="font-semibold text-emerald-100">Total USD (final):</span>
-                        <span className="font-bold text-lg text-emerald-200">${precioFinalUsd.toFixed(2)}</span>
-                      </div>
-                    )}
                   </div>
                 </div>
 
-                {/* Sección: Precio Unitario */}
+                {/* Precio Final: TOTAL A COBRAR */}
+                <div className="rounded-lg border-2 border-emerald-500 bg-emerald-900/30 p-4">
+                  <h3 className="text-base font-semibold text-emerald-200 mb-3 pb-2 border-b border-emerald-700/40">
+                    Precio Final
+                  </h3>
+                  <div className="flex justify-between items-center py-2">
+                    <span className="font-bold text-emerald-100">TOTAL A COBRAR</span>
+                    <span className="font-bold text-xl text-emerald-200">ARS $ {totalACobrarArs.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  </div>
+                </div>
+
+                {/* MercadoLibre: Precio con comisión */}
+                <div className="rounded-lg border border-emerald-700/60 bg-emerald-900/20 p-4">
+                  <h3 className="text-base font-semibold text-emerald-200 mb-3 pb-2 border-b border-emerald-700/40">
+                    MercadoLibre
+                  </h3>
+                  <div className="flex justify-between items-center py-1">
+                    <span className="text-neutral-300">Precio con comisión (+{comisionPlataformaPct}%)</span>
+                    <span className="font-bold text-emerald-200">ARS $ {precioConComisionArs.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  </div>
+                </div>
+
+                {/* Distribución de Costos */}
+                <div className="rounded-lg border border-emerald-700/60 bg-emerald-900/20 p-4">
+                  <h3 className="text-base font-semibold text-emerald-200 mb-3 pb-2 border-b border-emerald-700/40">
+                    Distribución de Costos
+                  </h3>
+                  <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
+                    <span className="text-neutral-300">Material: {pctMaterial.toFixed(1)}%</span>
+                    <span className="text-neutral-300">Margen Error: {pctMargenError.toFixed(1)}%</span>
+                    <span className="text-emerald-300 font-medium">Ganancia: {pctGanancia.toFixed(1)}%</span>
+                  </div>
+                </div>
+
+                {/* Precio Unitario (compacto) */}
                 <div className="rounded-lg border border-emerald-700/60 bg-emerald-900/20 p-4">
                   <h3 className="text-base font-semibold text-emerald-200 mb-3 pb-2 border-b border-emerald-700/40">
                     Precio Unitario
@@ -930,14 +967,14 @@ export default function NewPrintPage() {
                   <div className="grid gap-2">
                     {unitarioFinalArs !== null && (
                       <div className="flex justify-between items-center py-1">
-                        <span className="text-neutral-300">Unitario ARS (final):</span>
-                        <span className="font-semibold text-emerald-300">${unitarioFinalArs.toFixed(2)}</span>
+                        <span className="text-neutral-300">Unitario ARS (final)</span>
+                        <span className="font-semibold text-emerald-300">ARS $ {unitarioFinalArs.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                       </div>
                     )}
                     {unitarioFinalUsd !== null && (
                       <div className="flex justify-between items-center py-1">
-                        <span className="text-neutral-300">Unitario USD (final):</span>
-                        <span className="font-semibold text-emerald-300">${unitarioFinalUsd.toFixed(2)}</span>
+                        <span className="text-neutral-300">Unitario USD (final)</span>
+                        <span className="font-semibold text-emerald-300">$ {unitarioFinalUsd.toFixed(2)}</span>
                       </div>
                     )}
                   </div>

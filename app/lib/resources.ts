@@ -43,6 +43,8 @@ type CalculatePayload = {
     tiempo_disenio_horas?: number;
     minimo_trabajo_ars?: number;
     tarifa_mano_obra_usd_h?: number;
+    comision_plataforma_pct?: number;
+    referencia_tipo?: string | null;
     adicionales?: Array<{
         concepto: string;
         moneda?: string; // "ARS" | "USD"
@@ -263,6 +265,10 @@ export async function createPrintFromCalculation(
         | 'costo_sugerido_unitario_usd'
         | 'costo_sugerido_total_local'
         | 'costo_sugerido_unitario_local'
+        | 'referencia_tipo'
+        | 'referencia_multiplicador'
+        | 'precio_final_referencia_ars'
+        | 'precio_final_referencia_usd'
         | 'valor_dolar'
         | 'tarifa_mano_obra_usd_h'
         | 'costo_labor_usd'
@@ -298,6 +304,10 @@ export async function createPrintFromCalculation(
         precio_final_ars:
             (costBreakdown as any).precio_final_ars ??
             costBreakdown.costo_sugerido_total_local,
+        referencia_tipo: costBreakdown.referencia_tipo ?? null,
+        referencia_multiplicador: costBreakdown.referencia_multiplicador ?? 1,
+        precio_final_referencia_ars: costBreakdown.precio_final_referencia_ars ?? 0,
+        precio_final_referencia_usd: costBreakdown.precio_final_referencia_usd ?? 0,
         valor_dolar: valorDolar,
     };
 

@@ -89,11 +89,19 @@ export interface CostBreakdown {
     costo_sugerido_unitario_usd: number;
     costo_sugerido_total_local: number;
     costo_sugerido_unitario_local: number;
+    comision_plataforma_usd?: number | null;
     costo_labor_usd?: number;
     precio_calculado_ars?: number;
     precio_final_ars?: number;
     adicionales_total_ars?: number;
     adicionales_total_usd?: number;
+    referencia_tipo?: string | null;
+    referencia_multiplicador?: number;
+    precio_final_referencia_ars?: number;
+    precio_final_referencia_usd?: number;
+    total_costos_ars?: number;
+    total_a_cobrar_ars?: number;
+    precio_con_comision_ars?: number;
     margen_real_pct?: number;
     minimo_aplicado?: boolean;
 }
@@ -143,6 +151,10 @@ export interface Print {
     minimo_trabajo_ars: number;
     precio_calculado_ars: number;
     precio_final_ars: number;
+    referencia_tipo: string | null;
+    referencia_multiplicador: number;
+    precio_final_referencia_ars: number;
+    precio_final_referencia_usd: number;
     valor_dolar: number;
     created_at: string;
     updated_at: string;

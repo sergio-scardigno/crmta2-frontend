@@ -69,6 +69,18 @@ export default function PrintDetailPage() {
     );
   }
 
+  const referenciaLabel =
+    print.referencia_tipo === "minorista"
+      ? "Precio Minorista (x4)"
+      : print.referencia_tipo === "mayorista"
+        ? "Precio Mayorista (x3)"
+        : print.referencia_tipo === "llaveros"
+          ? "Precio Llaveros (x5)"
+          : null;
+  const referenciaUsd = print.valor_dolar
+    ? (print.precio_final_referencia_ars / print.valor_dolar)
+    : print.precio_final_referencia_usd;
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -287,6 +299,22 @@ export default function PrintDetailPage() {
                     ${(print.valor_dolar ? (print.precio_final_ars / print.valor_dolar) : 0).toFixed(2)}
                   </span>
                 </div>
+                {referenciaLabel && (
+                  <>
+                    <div className="mt-3 pt-3 border-t border-neutral-700 flex justify-between">
+                      <span className="text-neutral-400">{referenciaLabel}:</span>
+                      <span className="text-emerald-300 font-semibold">
+                        ${print.precio_final_referencia_ars.toFixed(2)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-neutral-400">Precio Referencia USD:</span>
+                      <span className="text-emerald-300 font-semibold">
+                        ${(referenciaUsd ?? 0).toFixed(2)}
+                      </span>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           </div>
