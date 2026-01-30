@@ -84,6 +84,7 @@ export default function NewPrintPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [printName, setPrintName] = useState("");
   const [printDescription, setPrintDescription] = useState("");
+  const [precioVentaArs, setPrecioVentaArs] = useState<number | null>(null);
   const [notes, setNotes] = useState("");
 
   // Redirigir a login si no hay tenant autenticado
@@ -290,6 +291,7 @@ export default function NewPrintPage() {
         worker_id: selectedWorkerIds.length > 0 ? selectedWorkerIds[0] : null, // Opcional: puede ser null
         material_id: preparedMaterials[0].id_material, // Usar el primer material seleccionado
         cantidad_material_gramos: preparedMaterials.reduce((sum, row) => sum + row.cantidad_usada, 0),
+        precio_venta_ars: precioVentaArs ?? undefined,
         extras: adicionales
           .map((a) => ({
             concepto: a.concepto.trim(),
@@ -501,6 +503,23 @@ export default function NewPrintPage() {
                 className="w-full px-3 py-2 bg-neutral-800 border border-neutral-600 rounded-md text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                 rows={2}
               />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-neutral-300 mb-2">
+                Precio de venta (ARS) – opcional
+              </label>
+              <input
+                type="number"
+                min={0}
+                step={1}
+                value={precioVentaArs ?? ""}
+                onChange={(e) => setPrecioVentaArs(e.target.value === "" ? null : Number(e.target.value))}
+                placeholder="Ej: 15000 – para calcular ganancia/pérdida"
+                className="w-full px-3 py-2 bg-neutral-800 border border-neutral-600 rounded-md text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+              />
+              <p className="text-xs text-neutral-400 mt-1">
+                Si lo completas, se calculará ganancia o pérdida respecto al costo.
+              </p>
             </div>
           </div>
 

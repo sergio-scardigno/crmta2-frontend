@@ -195,8 +195,8 @@ export default function PrintsTotalsPage() {
                                 USD
                             </div>
                             <p className="text-xs text-neutral-400 mt-2">
-                                Suma de precio_final_ars de todas las
-                                impresiones
+                                Suma de precio de venta (o precio final) de
+                                todas las impresiones
                             </p>
                         </div>
 

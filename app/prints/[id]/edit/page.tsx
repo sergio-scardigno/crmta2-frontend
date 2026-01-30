@@ -69,9 +69,10 @@ export default function EditPrintPage() {
         porcentaje_desperdicio: printData.porcentaje_desperdicio,
         margen_beneficio: printData.margen_beneficio,
         machine_id: printData.machine_id,
-        worker_id: printData.worker_id,
+        worker_id: printData.worker_id ?? 0,
         material_id: printData.material_id,
         cantidad_material_gramos: printData.cantidad_material_gramos,
+        precio_venta_ars: printData.precio_venta_ars ?? undefined,
       });
     } catch (err) {
       handleError(err, 'Error cargando datos');
@@ -88,8 +89,11 @@ export default function EditPrintPage() {
     try {
       setSaving(true);
       clearError();
-      
-      await updatePrint(print.id, formData);
+      const payload = {
+        ...formData,
+        worker_id: formData.worker_id === 0 ? null : formData.worker_id,
+      };
+      await updatePrint(print.id, payload);
       router.push(`/prints/${print.id}`);
     } catch (err) {
       handleError(err, 'Error actualizando impresión');
@@ -98,7 +102,7 @@ export default function EditPrintPage() {
     }
   };
 
-  const handleInputChange = (field: keyof UpdatePrintData, value: string | number) => {
+  const handleInputChange = (field: keyof UpdatePrintData, value: string | number | null | undefined) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -312,6 +316,22 @@ export default function EditPrintPage() {
                   placeholder="0.0"
                   required
                 />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-neutral-300 mb-2">
+                  Precio de venta (ARS) – opcional
+                </label>
+                <Input
+                  type="number"
+                  step="1"
+                  min="0"
+                  value={formData.precio_venta_ars ?? ''}
+                  onChange={(e) => handleInputChange('precio_venta_ars', e.target.value === '' ? undefined : parseFloat(e.target.value))}
+                  placeholder="Ej: 15000 – para calcular ganancia/pérdida"
+                />
+                <p className="text-xs text-neutral-400 mt-1">
+                  Si lo completas, se recalculará ganancia o pérdida respecto al costo.
+                </p>
               </div>
             </div>
           </div>

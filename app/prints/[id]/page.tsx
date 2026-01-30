@@ -317,6 +317,44 @@ export default function PrintDetailPage() {
                 )}
               </div>
             </div>
+
+            {(print.precio_venta_ars != null && print.precio_venta_ars > 0) && (
+              <div>
+                <h4 className="text-lg font-semibold text-white mb-3">Precio de venta y ganancia</h4>
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-neutral-400">Precio de venta (ARS):</span>
+                    <span className="text-white font-semibold">
+                      ${Number(print.precio_venta_ars).toFixed(2)}
+                    </span>
+                  </div>
+                  {print.ganancia_ars != null && (
+                    <div className="flex justify-between">
+                      <span className="text-neutral-400">Ganancia / Pérdida (ARS):</span>
+                      <span className={`font-semibold ${Number(print.ganancia_ars) >= 0 ? "text-emerald-400" : "text-red-400"}`}>
+                        ${Number(print.ganancia_ars).toFixed(2)}
+                      </span>
+                    </div>
+                  )}
+                  {print.ganancia_usd != null && (
+                    <div className="flex justify-between">
+                      <span className="text-neutral-400">Ganancia / Pérdida (USD):</span>
+                      <span className={`font-semibold ${Number(print.ganancia_usd) >= 0 ? "text-emerald-400" : "text-red-400"}`}>
+                        ${Number(print.ganancia_usd).toFixed(2)}
+                      </span>
+                    </div>
+                  )}
+                  {print.margen_ganancia_pct != null && (
+                    <div className="flex justify-between">
+                      <span className="text-neutral-400">Margen (%):</span>
+                      <span className={`font-semibold ${Number(print.margen_ganancia_pct) >= 0 ? "text-emerald-400" : "text-red-400"}`}>
+                        {Number(print.margen_ganancia_pct).toFixed(1)}%
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

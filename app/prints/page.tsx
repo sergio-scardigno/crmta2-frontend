@@ -114,6 +114,8 @@ export default function PrintsPage() {
                   "Costo Total USD",
                   "Costo Unitario USD",
                   "Precio Sugerido USD",
+                  "Precio venta ARS",
+                  "Ganancia ARS",
                   "Fecha",
                   "Acciones",
                 ].map((h) => (
@@ -144,6 +146,20 @@ export default function PrintsPage() {
                   </TableCell>
                   <TableCell className="text-sm text-blue-400 font-medium">
                     ${print.costo_sugerido_unitario_usd.toFixed(2)}
+                  </TableCell>
+                  <TableCell className="text-sm text-neutral-300">
+                    {print.precio_venta_ars != null && print.precio_venta_ars > 0
+                      ? `$${Number(print.precio_venta_ars).toFixed(0)}`
+                      : "—"}
+                  </TableCell>
+                  <TableCell className="text-sm font-medium">
+                    {print.ganancia_ars != null
+                      ? (
+                          <span className={Number(print.ganancia_ars) >= 0 ? "text-emerald-400" : "text-red-400"}>
+                            ${Number(print.ganancia_ars).toFixed(0)}
+                          </span>
+                        )
+                      : "—"}
                   </TableCell>
                   <TableCell className="text-sm text-neutral-400">
                     {new Date(print.created_at).toLocaleDateString("es-ES")}

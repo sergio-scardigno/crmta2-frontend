@@ -309,6 +309,7 @@ export async function createPrintFromCalculation(
         precio_final_referencia_ars: costBreakdown.precio_final_referencia_ars ?? 0,
         precio_final_referencia_usd: costBreakdown.precio_final_referencia_usd ?? 0,
         valor_dolar: valorDolar,
+        precio_venta_ars: printData.precio_venta_ars ?? undefined,
     };
 
     return createPrint(fullPrintData);

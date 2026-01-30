@@ -159,6 +159,10 @@ export interface Print {
     precio_final_referencia_ars: number;
     precio_final_referencia_usd: number;
     valor_dolar: number;
+    precio_venta_ars?: number | null;
+    ganancia_ars?: number | null;
+    ganancia_usd?: number | null;
+    margen_ganancia_pct?: number | null;
     created_at: string;
     updated_at: string;
     // Relaciones
