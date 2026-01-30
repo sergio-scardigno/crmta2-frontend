@@ -853,13 +853,13 @@ export default function NewPrintPage() {
             const valorDolar = dollarValue > 0 ? dollarValue : 1;
             // Costos en ARS (como en la referencia)
             const materialArs = (result.costo_materiales_usd + result.costo_desperdicio_usd) * valorDolar;
-            const electricidadArs = result.costo_electricidad_usd * valorDolar;
+            const electricidadArs = (result.costo_electricidad_usd ?? 0) * valorDolar;
             const desgasteArs = result.costo_maquinas_usd * valorDolar;
-            const margenErrorArs = result.costo_seguro_fallos_usd * valorDolar;
+            const margenErrorArs = (result.costo_seguro_fallos_usd ?? 0) * valorDolar;
             const insumosArs = 0; // fijo por ahora
-            const otrosArs = (result.costo_gastos_fijos_usd + result.costo_labor_usd + result.costo_trabajadores_usd) * valorDolar;
+            const otrosArs = (result.costo_gastos_fijos_usd + (result.costo_labor_usd ?? 0) + result.costo_trabajadores_usd) * valorDolar;
             const costoProduccionArs = materialArs + electricidadArs + desgasteArs + margenErrorArs;
-            const totalCostosArs = result.total_costos_ars ?? result.costo_base_usd * valorDolar;
+            const totalCostosArs = result.total_costos_ars ?? (result.costo_base_usd ?? result.costo_total_usd) * valorDolar;
             const totalACobrarArs = result.total_a_cobrar_ars ?? totalCostosArs * (result.referencia_multiplicador ?? 1);
             const precioConComisionArs = result.precio_con_comision_ars ?? totalACobrarArs * (1 + comisionPlataformaPct / 100);
             // Distribución de costos (sobre total a cobrar)
