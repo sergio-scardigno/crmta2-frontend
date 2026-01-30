@@ -83,6 +83,9 @@ export interface CostBreakdown {
     costo_materiales_usd: number;
     costo_desperdicio_usd: number;
     costo_gastos_fijos_usd: number;
+    costo_electricidad_usd?: number;
+    costo_seguro_fallos_usd?: number;
+    costo_base_usd?: number;
     costo_total_usd: number;
     costo_unitario_usd: number;
     costo_sugerido_total_usd: number;
