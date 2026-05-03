@@ -227,7 +227,6 @@ export async function generateQuotePdf({
       { k: "Fecha", v: fecha },
       { k: "Unidades", v: String(formData.unidades) },
       { k: "Horas estimadas", v: String(formData.horas) },
-      { k: "Tipo de cambio", v: `${fmtARS(formData.valorDolar)} por USD` },
       { k: "Cliente", v: cliente?.clienteNombre || "-" },
     ],
     2
@@ -253,13 +252,13 @@ export async function generateQuotePdf({
     doc.roundedRect(M, y, CONTENT_W, 16, 3, 3, "S");
     setText(10, true);
     doc.setTextColor(110);
-    doc.text("Precio unitario", M + 6, y + 7);
+    doc.text("Precio unitario (ARS)", M + 6, y + 7);
 
     setText(12, true);
     doc.setTextColor(20);
-    const uArs = computedTotals.unitarioFinalArs !== null ? fmtARS(computedTotals.unitarioFinalArs) : "-";
-    const uUsd = computedTotals.unitarioFinalUsd !== null ? fmtUSD(computedTotals.unitarioFinalUsd) : "-";
-    doc.text(`${uArs}  |  ${uUsd}`, M + 6, y + 13);
+    const uArs =
+      computedTotals.unitarioFinalArs !== null ? fmtARS(computedTotals.unitarioFinalArs) : "-";
+    doc.text(uArs, M + 6, y + 13);
 
     y += 20;
   }
@@ -369,7 +368,6 @@ export async function generateQuotePdf({
       { k: "Fecha", v: fecha },
       { k: "Unidades", v: String(formData.unidades) },
       { k: "Horas impresión", v: String(formData.horas) },
-      { k: "USD/ARS", v: `${formData.valorDolar.toFixed(2)}` },
       { k: "Versión", v: interno?.versionCalculadora ?? "-" },
       { k: "Responsable", v: interno?.responsable ?? "-" },
     ],
@@ -410,7 +408,6 @@ export async function generateQuotePdf({
     ["Total ARS (final)", fmtARS(computedTotals.precioFinalArs)],
     ["Total USD (final)", computedTotals.precioFinalUsd !== null ? fmtUSD(computedTotals.precioFinalUsd) : "-"],
     ["Unitario ARS", computedTotals.unitarioFinalArs !== null ? fmtARS(computedTotals.unitarioFinalArs) : "-"],
-    ["Unitario USD", computedTotals.unitarioFinalUsd !== null ? fmtUSD(computedTotals.unitarioFinalUsd) : "-"],
   ];
 
   autoTable(doc, {
