@@ -12,7 +12,7 @@ import {
   fetchCurrencyRate,
   createPrintFromCalculation,
 } from "@/app/lib/resources";
-import { generateQuotePdf } from "@/app/lib/pdf/quote";
+import { generateClientQuotePdf, generateInternalQuotePdf } from "@/app/lib/pdf/quote";
 import { Select } from "@/app/components/ui/Select";
 import type {
   CostBreakdown,
@@ -318,6 +318,51 @@ export default function NewPrintPage() {
       console.error("Error:", err);
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleDownloadQuotePdf = async (target: "client" | "internal") => {
+    if (!result) return;
+
+    const precioCalculadoArs = result.precio_calculado_ars ?? result.costo_sugerido_total_local;
+    const precioFinalArs = result.precio_final_ars ?? precioCalculadoArs;
+    const precioFinalUsd = dollarValue > 0 ? precioFinalArs / dollarValue : null;
+    const unitarioFinalArs = units > 0 ? precioFinalArs / units : null;
+    const unitarioFinalUsd = precioFinalUsd !== null && units > 0 ? precioFinalUsd / units : null;
+    const adicionalesTotalArs = result.adicionales_total_ars ?? 0;
+    const adicionalesTotalUsd =
+      result.adicionales_total_usd ?? (dollarValue > 0 ? adicionalesTotalArs / dollarValue : 0);
+
+    const params = {
+      formData: {
+        nombre: printName || "Impresión sin nombre",
+        descripcion: printDescription,
+        horas: hours,
+        unidades: units,
+        valorDolar: dollarValue,
+      },
+      result,
+      computedTotals: {
+        precioFinalArs,
+        precioFinalUsd,
+        unitarioFinalArs,
+        unitarioFinalUsd,
+        adicionalesTotalArs,
+        adicionalesTotalUsd,
+      },
+      adicionales: adicionales.filter((a) => a.concepto.trim() && (a.monto ?? 0) > 0),
+      notes,
+    };
+
+    try {
+      if (target === "client") {
+        await generateClientQuotePdf(params);
+      } else {
+        await generateInternalQuotePdf(params);
+      }
+    } catch (error) {
+      console.error("Error generando PDF:", error);
+      setError("Error al generar el PDF. Por favor, intente nuevamente.");
     }
   };
 
@@ -1050,58 +1095,35 @@ export default function NewPrintPage() {
           })()}
           
           {/* Botones de acción */}
-          <div className="mt-4 pt-4 border-t border-emerald-700/60 flex flex-col sm:flex-row gap-3">
-            <button
-              type="button"
-              onClick={handleSavePrint}
-              disabled={isSaving || !printName.trim()}
-              className="flex-1 rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isSaving ? "Guardando..." : "Guardar Impresión"}
-            </button>
-            <button
-              type="button"
-              onClick={async () => {
-                if (!result) return;
-                
-                const precioCalculadoArs = result.precio_calculado_ars ?? result.costo_sugerido_total_local;
-                const precioFinalArs = result.precio_final_ars ?? precioCalculadoArs;
-                const precioFinalUsd = dollarValue > 0 ? precioFinalArs / dollarValue : null;
-                const unitarioFinalArs = units > 0 ? precioFinalArs / units : null;
-                const unitarioFinalUsd = precioFinalUsd !== null && units > 0 ? precioFinalUsd / units : null;
-                const adicionalesTotalArs = result.adicionales_total_ars ?? 0;
-                const adicionalesTotalUsd = result.adicionales_total_usd ?? (dollarValue > 0 ? adicionalesTotalArs / dollarValue : 0);
-                
-                try {
-                  await generateQuotePdf({
-                    formData: {
-                      nombre: printName || "Impresión sin nombre",
-                      descripcion: printDescription,
-                      horas: hours,
-                      unidades: units,
-                      valorDolar: dollarValue,
-                    },
-                    result,
-                    computedTotals: {
-                      precioFinalArs,
-                      precioFinalUsd,
-                      unitarioFinalArs,
-                      unitarioFinalUsd,
-                      adicionalesTotalArs,
-                      adicionalesTotalUsd,
-                    },
-                    adicionales: adicionales.filter(a => a.concepto.trim() && (a.monto ?? 0) > 0),
-                    notes,
-                  });
-                } catch (error) {
-                  console.error('Error generando PDF:', error);
-                  setError('Error al generar el PDF. Por favor, intente nuevamente.');
-                }
-              }}
-              className="flex-1 rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-500"
-            >
-              Descargar PDF (Presupuesto)
-            </button>
+          <div className="mt-4 pt-4 border-t border-emerald-700/60 flex flex-col gap-3">
+            <div className="flex flex-col sm:flex-row gap-3">
+              <button
+                type="button"
+                onClick={handleSavePrint}
+                disabled={isSaving || !printName.trim()}
+                className="flex-1 rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSaving ? "Guardando..." : "Guardar Impresión"}
+              </button>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <button
+                type="button"
+                onClick={() => void handleDownloadQuotePdf("client")}
+                disabled={!result}
+                className="flex-1 rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                PDF presupuesto (cliente)
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleDownloadQuotePdf("internal")}
+                disabled={!result}
+                className="flex-1 rounded-md bg-neutral-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-neutral-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                PDF uso interno
+              </button>
+            </div>
           </div>
           <p className="text-xs text-neutral-400 text-center">
             La impresión se guardará en el historial para futuras consultas
